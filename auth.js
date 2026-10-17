@@ -22,6 +22,7 @@
       + '<p id="bt-autherr" style="color:#ff8080;font-size:.85rem;min-height:1.2em;margin:0 0 8px"></p>'
       + '<button id="bt-authgo" class="btn btn-yellow" style="width:100%;padding:12px;cursor:pointer;border:none;font:inherit">Log in</button>'
       + '<p style="text-align:center;margin:12px 0 0"><a href="#" id="bt-authswitch" style="color:#FFC800;font-size:.9rem">New here? Sign up</a></p>'
+      + '<p style="text-align:center;margin:6px 0 0"><a href="#" id="bt-authforgot" style="color:#999;font-size:.85rem">Forgot password?</a></p>'
       + '<p style="text-align:center;margin:8px 0 0"><a href="#" id="bt-authcancel" style="color:#999;font-size:.85rem">Cancel</a></p>'
       + '</div></div>');
     document.body.appendChild(m);
@@ -30,6 +31,17 @@
     document.getElementById('bt-authcancel').onclick = function(e){ e.preventDefault(); show(false); };
     m.onclick = function(e){ if(e.target===m) show(false); };
     document.getElementById('bt-authswitch').onclick = function(e){ e.preventDefault(); setMode(mode==='login'?'signup':'login'); };
+    document.getElementById('bt-authforgot').onclick = async function(e){
+      e.preventDefault();
+      var em = document.getElementById('bt-authemail').value.trim();
+      var err = document.getElementById('bt-autherr');
+      if(!em){ err.textContent='Enter your email first, then click Forgot password.'; return; }
+      err.textContent='…';
+      try{
+        var r = await sb.auth.resetPasswordForEmail(em);
+        err.textContent = r.error ? r.error.message : 'Reset link sent! Check your email.';
+      }catch(ex){ err.textContent='Something went wrong — try again.'; }
+    };
     document.getElementById('bt-authgo').onclick = doAuth;
   }
 
@@ -37,6 +49,7 @@
     document.getElementById('bt-authtitle').textContent = m==='login' ? '🔐 Log in' : '📝 Sign up';
     document.getElementById('bt-authgo').textContent = m==='login' ? 'Log in' : 'Create account';
     document.getElementById('bt-authswitch').textContent = m==='login' ? 'New here? Sign up' : 'Have an account? Log in';
+    document.getElementById('bt-authforgot').style.display = m==='login' ? '' : 'none';
     document.getElementById('bt-autherr').textContent = '';
   }
   function show(v){ document.getElementById('bt-authmodal').style.display = v?'flex':'none'; }
