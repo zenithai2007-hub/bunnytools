@@ -1,1 +1,27 @@
 (function(){var LIMIT=10;function today(){return new Date().toISOString().slice(0,10);}function key(t){return 'zt_use_'+t+'_'+today();}function get(t){try{return parseInt(localStorage.getItem(key(t))||'0',10)||0;}catch(e){return 0;}}function isPremium(){try{return localStorage.getItem('zt_premium')==='1';}catch(e){return false;}}function remaining(t){return isPremium()?Infinity:Math.max(0,LIMIT-get(t));}function badgeHTML(t){if(isPremium())return '<div class="usebadge premium">👑<b>Premium active</b>— unlimited uses</div>';var r=remaining(t);return '<div class="usebadge">⚡<b>'+r+'</b>free uses left today ·<a href="index.html#premium" style="color:var(--yellow-d);font-weight:700">Go Premium 👑</a></div>';}function refreshBadge(t){var b=document.querySelector('.usebadge');if(b)b.outerHTML=badgeHTML(t);}function modal(){if(document.getElementById('zt-modal'))return;var m=document.createElement('div');m.id='zt-modal';m.innerHTML='<div style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)this.parentNode.remove()">'+'<div style="background:#1a1a1a;color:#fff;border-radius:22px;padding:36px 30px;max-width:420px;text-align:center;border:2px solid #FFC800">'+'<div style="font-size:3rem">👑</div>'+'<h2 style="margin:10px 0">Daily free limit reached!</h2>'+'<p style="color:#d9c88a;margin-bottom:8px">You used all '+LIMIT+' free uses for today.</p>'+'<p style="color:#fff;margin-bottom:20px"><b>Go Premium — $4.99/month:</b><br>✅ Unlimited uses&nbsp;✅ Zero ads</p>'+'<a href="index.html#premium" class="btn btn-yellow" style="width:100%;text-align:center;margin-bottom:10px">See Premium Plans →</a><br>'+'<button onclick="document.getElementById(\'zt-modal\').remove()" style="background:none;border:none;color:#999;cursor:pointer;margin-top:8px">Come back tomorrow(free resets daily)</button>'+'</div></div>';document.body.appendChild(m);}window.ZT={count:function(tool){if(isPremium()){refreshBadge(tool);return true;}if(remaining(tool)<=0){modal();return false;}try{localStorage.setItem(key(tool),String(get(tool)+1));}catch(e){}refreshBadge(tool);return true;},init:function(tool,btnId){var box=document.querySelector('.toolbox');if(box)box.insertAdjacentHTML('afterbegin',badgeHTML(tool));var btn=document.getElementById(btnId);if(!btn)return;var orig=btn.onclick;btn.onclick=function(e){if(isPremium()){refreshBadge(tool);if(orig)return orig.call(btn,e);return;}var r=remaining(tool);if(r<=0){modal();return false;}try{localStorage.setItem(key(tool),String(get(tool)+1));}catch(err){}refreshBadge(tool);if(orig)return orig.call(btn,e);};var st=document.createElement('style');st.textContent='.usebadge{background:#FFF9E6;border:1.5px solid #f0e6c8;border-radius:12px;padding:10px 14px;margin-bottom:18px;font-size:.9rem}.usebadge.premium{background:#1a1a1a;color:#FFC800;border-color:#FFC800}';document.head.appendChild(st);}};})();
+/* Fix 3 (2026-10-21): Share + Bookmark bar on every tool page — injected via ZT.init so all 18 tools get it. */
+(function(){
+  if(!window.ZT||!window.ZT.init)return;
+  var _init=window.ZT.init;
+  function pageUrl(){try{var c=document.querySelector('link[rel="canonical"]');if(c&&c.href)return c.href;}catch(e){}return location.href;}
+  function shareText(){return document.title.replace(/\s*[|—-]\s*BunnyTools.*$/,'').trim()+' — free on BunnyTools (no signup): ';}
+  window.ztWhats=function(){window.open('https://wa.me/?text='+encodeURIComponent(shareText()+pageUrl()),'_blank');};
+  window.ztCopy=function(btn){var u=pageUrl();function done(){if(btn){var o=btn.textContent;btn.textContent='✅ Copied!';setTimeout(function(){btn.textContent=o;},1600);}}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(u).then(done).catch(function(){prompt('Copy this link:',u);});}else{prompt('Copy this link:',u);}};
+  window.ztShare=function(){var u=pageUrl();if(navigator.share){navigator.share({title:document.title,text:shareText(),url:u}).catch(function(){});}else{window.ztCopy();}};
+  window.ztBookmark=function(){var isMac=/Mac/i.test(navigator.platform||'');alert('📌 Save BunnyTools for next time:\n\n• On phone: tap browser menu (⋮) → "Add to Home screen"\n• On computer: press '+(isMac?'Cmd':'Ctrl')+'+D to bookmark this page');};
+  window.ZT.init=function(tool,btnId){
+    _init(tool,btnId);
+    try{
+      var box=document.querySelector('.toolbox');
+      if(box&&!document.getElementById('zt-sharebar')){
+        var d=document.createElement('div');
+        d.id='zt-sharebar';d.className='zt-sharebar';
+        d.innerHTML='<span class="zt-sb-t">💾 Lamba link yaad rakhne ki tension khatam —</span><button type="button" onclick="ztWhats()">💬 WhatsApp par share</button><button type="button" onclick="ztCopy(this)">🔗 Link copy</button><button type="button" onclick="ztBookmark()">⭐ Bookmark</button>';
+        box.appendChild(d);
+        var st=document.createElement('style');
+        st.textContent='.zt-sharebar{margin-top:18px;background:#FFF9E6;border:1.5px solid #f0e6c8;border-radius:12px;padding:12px 14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}.zt-sharebar .zt-sb-t{font-size:.9rem;font-weight:600;margin-right:4px}.zt-sharebar button{background:#fff;border:1.5px solid #e5d9a8;border-radius:999px;padding:7px 14px;font-size:.88rem;cursor:pointer;font-weight:600}.zt-sharebar button:hover{background:#FFC800}';
+        document.head.appendChild(st);
+      }
+    }catch(e){}
+  };
+})();
